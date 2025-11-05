@@ -2,27 +2,29 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import joblib
 
-app = FastAPI(title="Spam Detection API")
+app = FastAPI()
 
-# Load model and vectorizer
-model = joblib.load("spam_model.pkl")
-vectorizer = joblib.load("vectorizer.pkl")
-
+# Define the input schema correctly
 class Message(BaseModel):
     message: str
 
-@app.get("/")
-def home():
-    return {"message": "Welcome to the Spam Detection API! Go to /docs to test the model."}
+# Load model safely
+try:
+    model = joblib.load("model.pkl")
+    print("✅ Model loaded successfully")
+except Exception as e:
+    print("❌ Model loading failed:", e)
+    model = None
 
 @app.post("/predict")
-def predict(data: InputData):
+def predict(data: Message):
     try:
-        message = data.message
-        prediction = model.predict([message])
-        return {"prediction": prediction[0]}
+        if model is None:
+            return {"error": "Model not loaded on server"}
+        msg = str(data.message)
+        prediction = model.predict([msg])
+        return {"prediction": str(prediction[0])}
     except Exception as e:
         import traceback
         traceback.print_exc()
         return {"error": str(e)}
-

@@ -16,8 +16,13 @@ def home():
     return {"message": "Welcome to the Spam Detection API! Go to /docs to test the model."}
 
 @app.post("/predict")
-def predict(data: Message):
-    text = [data.message]
-    text_vectorized = vectorizer.transform(text)
-    prediction = model.predict(text_vectorized)[0]
-    return {"prediction": prediction}
+def predict(data: InputData):
+    try:
+        message = data.message
+        prediction = model.predict([message])
+        return {"prediction": prediction[0]}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
